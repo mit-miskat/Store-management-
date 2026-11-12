@@ -1,0 +1,6 @@
+{
+  "name": "AJ MOTORS - দোকান ম্যানেজমেন্ট",
+  "description": "AJ MOTORS খুচরা দোকান ব্যবস্থাপনা ওয়েব অ্যাপ — স্টক, ক্রয়-বিক্রয়, ক্যাশমেমো ও হিসাব খাতা।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

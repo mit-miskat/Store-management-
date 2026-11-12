@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>AJ MOTORS — ডিজাইন সিস্টেম ও অ্যাপ স্ক্রিন</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #111111;
+    --surface: #1A1A1A;
+    --surface-2: #232323;
+    --line: #2E2E2E;
+    --text: #F2F1EC;
+    --muted: #9B9A94;
+    --accent: #E8A317;
+    --accent-ink: #111111;
+    --ok: #4FAE6E;
+    --warn: #E8A317;
+    --danger: #E0583C;
+    --info: #5C8FBF;
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-pill: 999px;
+    --space: 8px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: "Hind Siliguri", system-ui, sans-serif; font-size: 15px; line-height: 1.6;
+    padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);
+  }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .display { font-family: "Barlow Condensed", sans-serif; font-weight: 700; letter-spacing: .01em; }
+  .muted { color: var(--muted); }
+  .hidden { display: none !important; }
+
+  /* ---------- Icons ---------- */
+  .ico { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .ico.sm { width: 16px; height: 16px; }
+  .ico.lg { width: 24px; height: 24px; }
+
+  /* ---------- App shell ---------- */
+  .topbar {
+    position: sticky; top: var(--safe-top); z-index: 20;
+    display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 16px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+  }
+  .iconbtn {
+    display: inline-grid; place-items: center; width: 40px; height: 40px;
+    background: transparent; border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer;
+  }
+  .iconbtn:hover { background: var(--surface); }
+  .brand { display: flex; align-items: baseline; gap: 8px; }
+  .brand b { font-family: "Barlow Condensed"; font-size: 24px; font-weight: 700; letter-spacing: .02em; }
+  .brand span { color: var(--muted); font-size: 13px; }
+  .topbar .grow { flex: 1; }
+  .search {
+    display: flex; align-items: center; gap: 8px; height: 40px; width: min(320px, 40vw);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 0 12px;
+  }
+  .search input { background: none; border: 0; outline: 0; flex: 1; min-width: 0; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--surface-2); border: 1px solid var(--line); font-weight: 600; font-size: 14px;
+  }
+
+  .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 40; }
+  .drawer {
+    position: fixed; top: 0; bottom: 0; left: 0; width: 272px; z-index: 50;
+    background: var(--surface); border-right: 1px solid var(--line);
+    padding: calc(20px + var(--safe-top)) 14px calc(20px + var(--safe-bottom));
+    transform: translateX(-100%); transition: transform .22s ease;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .drawer.open { transform: none; }
+  .drawer .brand { padding: 0 10px 18px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--r-md);
+    background: none; border: 0; text-align: left; cursor: pointer; color: var(--muted);
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
+  .nav-item[aria-current="page"] .ico { stroke: var(--accent-ink); }
+  .nav-sep { height: 1px; background: var(--line); margin: 8px 6px; }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 96px; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .page-head h1 { margin: 0; font-size: 36px; line-height: 1; }
+  .page-head p { margin: 6px 0 0; color: var(--muted); }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 42px; padding: 0 16px; border-radius: var(--r-md); border: 1px solid transparent;
+    background: var(--surface-2); color: var(--text); cursor: pointer; font-weight: 600; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.06); border-color: transparent; }
+  .btn.ghost { background: transparent; border-color: var(--line); }
+  .btn.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
+  .btn.sm { height: 34px; padding: 0 12px; font-size: 14px; }
+  .btn.lg { height: 52px; padding: 0 22px; font-size: 17px; width: 100%; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  /* ---------- Boxes / cards ---------- */
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 20px; }
+  .box.flat { background: transparent; }
+  .box-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .box-title h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px 18px; }
+  .stat .label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+  .stat .value { font-family: "Barlow Condensed"; font-size: 40px; font-weight: 700; line-height: 1.1; margin-top: 4px; }
+  .stat .delta { font-size: 13px; color: var(--ok); }
+  .stat .delta.down { color: var(--danger); }
+  .grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+  .stack { display: grid; gap: 16px; }
+
+  /* ---------- Badges ---------- */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: 13px; border: 1px solid currentColor; background: transparent; white-space: nowrap;
+  }
+  .badge.ok { color: var(--ok); }
+  .badge.warn { color: var(--warn); }
+  .badge.danger { color: var(--danger); }
+  .badge.info { color: var(--info); }
+  .badge.neutral { color: var(--muted); border-color: var(--line); }
+
+  /* ---------- Forms ---------- */
+  .field { display: grid; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 14px; color: var(--muted); }
+  .input, .select {
+    height: 42px; padding: 0 12px; background: var(--bg); border: 1px solid var(--line);
+    border-radius: var(--r-md); width: 100%; outline: 0;
+  }
+  .input:focus, .select:focus { border-color: var(--accent); }
+  .input.money { text-align: right; font-variant-numeric: tabular-nums; }
+  .input.error { border-color: var(--danger); }
+  .hint { font-size: 13px; color: var(--danger); }
+  .toggle { position: relative; width: 44px; height: 24px; border-radius: var(--r-pill); background: var(--line); border: 0; cursor: pointer; }
+  .toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--text); transition: transform .18s; }
+  .toggle[aria-checked="true"] { background: var(--accent); }
+  .toggle[aria-checked="true"]::after { transform: translateX(20px); background: var(--accent-ink); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { height: 34px; padding: 0 14px; border-radius: var(--r-pill); border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 14px; color: var(--muted); }
+  .chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--line); font-size: 14px; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; }
+  td.r, th.r { text-align: right; }
+  tbody tr:hover { background: var(--surface-2); }
+
+  /* ---------- Product tiles (POS) ---------- */
+  .pos { display: grid; grid-template-columns: 1fr 360px; gap: 16px; align-items: start; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 12px; text-align: left; cursor: pointer; display: grid; gap: 8px; min-height: 124px;
+  }
+  .tile:hover { border-color: var(--muted); }
+  .tile .thumb { height: 52px; border-radius: var(--r-sm); background: var(--surface-2); display: grid; place-items: center; font-family: "Barlow Condensed"; font-size: 26px; font-weight: 700; color: var(--muted); }
+  .tile .pn { font-size: 14px; line-height: 1.3; }
+  .tile .pp { font-weight: 600; }
+  .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .cart-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: var(--r-md); height: 32px; }
+  .qty button { width: 32px; height: 100%; background: none; border: 0; cursor: pointer; }
+  .qty span { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; }
+  .total-row { display: flex; justify-content: space-between; padding: 6px 0; color: var(--muted); }
+  .total-row.grand { color: var(--text); font-family: "Barlow Condensed"; font-size: 34px; font-weight: 700; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 10px; }
+
+  /* ---------- Toast & modal ---------- */
+  .toast { position: fixed; right: 16px; bottom: calc(16px + var(--safe-bottom)); z-index: 60; background: var(--text); color: var(--bg); padding: 12px 16px; border-radius: var(--r-md); font-weight: 500; display: flex; gap: 10px; align-items: center; opacity: 0; transform: translateY(8px); transition: .22s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: none; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; z-index: 70; padding: 16px; }
+  .modal { width: min(440px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 22px; }
+  .modal h3 { margin: 0 0 6px; font-size: 22px; }
+
+  /* ---------- Component sheet ---------- */
+  .sheet-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .swatch { border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; }
+  .swatch i { display: block; height: 56px; }
+  .swatch div { padding: 8px 10px; font-size: 13px; }
+  .icon-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .icon-cell { display: grid; justify-items: center; gap: 6px; padding: 14px 6px; border: 1px solid var(--line); border-radius: var(--r-md); font-size: 12px; color: var(--muted); }
+  .type-scale > div { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); padding: 8px 0; gap: 12px; }
+  .type-scale small { color: var(--muted); }
+  .bottom-nav { display: none; }
+
+  @media (max-width: 900px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .pos, .sheet-grid { grid-template-columns: 1fr; }
+    .search { display: none; }
+    .icon-row { grid-template-columns: repeat(4, 1fr); }
+    .swatches { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .bottom-nav {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+      background: var(--surface); border-top: 1px solid var(--line);
+      padding: 6px 6px calc(6px + var(--safe-bottom)); justify-content: space-around;
+    }
+    .bottom-nav button { background: none; border: 0; color: var(--muted); display: grid; justify-items: center; gap: 2px; font-size: 11px; padding: 6px 8px; cursor: pointer; border-radius: var(--r-md); }
+    .bottom-nav button[aria-current="page"] { color: var(--accent); }
+    main { padding-bottom: 104px; }
+    .page-head h1 { font-size: 30px; }
+    .stat .value { font-size: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- SVG icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2.5l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6.4"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 10h4l3 3v3h-7"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c1.9.8 3 2.7 3.4 5.3"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0 5 5L11 20a2.1 2.1 0 0 1-3-3l8.5-8.5a4 4 0 0 1-2-2z"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H19v12H4.5A1.5 1.5 0 0 1 3 16.5z"/><path d="M16 12h2.5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5v.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 14h10v7H7z"/></symbol>
+    <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M4 6v12M7 6v12M10 6v12M13 6v12M16 6v12M19 6v12M9 6h1M15 6h1"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-3.8 3.8-6 7.5-6s6.7 2.2 7.5 6"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  </defs>
+</svg>
+
+<!-- Drawer (☰ menu) -->
+<div class="drawer-backdrop hidden" id="backdrop"></div>
+<aside class="drawer" id="drawer" aria-label="মেনু">
+  <div class="brand"><b>AJ MOTORS</b><span>দোকান ম্যানেজমেন্ট</span></div>
+  <button class="nav-item" data-go="dash"><svg class="ico"><use href="#i-home"/></svg>ড্যাশবোর্ড</button>
+  <button class="nav-item" data-go="pos"><svg class="ico"><use href="#i-cart"/></svg>বিক্রি</button>
+  <button class="nav-item" data-go="products"><svg class="ico"><use href="#i-box"/></svg>পণ্য ও স্টক</button>
+  <button class="nav-item" data-go="purchase"><svg class="ico"><use href="#i-truck"/></svg>ক্রয়</button>
+  <button class="nav-item" data-go="customers"><svg class="ico"><use href="#i-users"/></svg>গ্রাহক ও বাকি</button>
+  <button class="nav-item" data-go="jobs"><svg class="ico"><use href="#i-wrench"/></svg>সার্ভিস জব</button>
+  <button class="nav-item" data-go="cash"><svg class="ico"><use href="#i-wallet"/></svg>ক্যাশবুক</button>
+  <button class="nav-item" data-go="reports"><svg class="ico"><use href="#i-chart"/></svg>রিপোর্ট</button>
+  <div class="nav-sep"></div>
+  <button class="nav-item" data-go="ui"><svg class="ico"><use href="#i-settings"/></svg>ডিজাইন সিস্টেম</button>
+</aside>
+
+<header class="topbar">
+  <button class="iconbtn" id="menuBtn" aria-label="মেনু খুলুন" aria-expanded="false"><svg class="ico"><use href="#i-menu"/></svg></button>
+  <div class="brand"><b>AJ MOTORS</b><span class="hide-sm">মূল দোকান</span></div>
+  <div class="grow"></div>
+  <label class="search"><svg class="ico sm"><use href="#i-search"/></svg><input placeholder="পণ্য, বারকোড, গ্রাহক খুঁজুন" aria-label="খুঁজুন"></label>
+  <button class="iconbtn" aria-label="নোটিফিকেশন"><svg class="ico"><use href="#i-bell"/></svg></button>
+  <div class="avatar" title="রফিক · অ্যাডমিন">রা</div>
+</header>
+
+<main>
+
+  <!-- ড্যাশবোর্ড -->
+  <section class="screen active" id="s-dash">
+    <div class="page-head">
+      <div><h1 class="display">আজকের সারাংশ</h1><p>শুক্রবার, ১৩ নভেম্বর ২০২৬</p></div>
+      <div class="btn-row"><button class="btn ghost" data-go="reports"><svg class="ico sm"><use href="#i-chart"/></svg>রিপোর্ট</button><button class="btn primary" data-go="pos"><svg class="ico sm"><use href="#i-cart"/></svg>বিক্রি শুরু</button></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="label"><svg class="ico sm"><use href="#i-receipt"/></svg>আজকের বিক্রি</div><div class="value num">৳ ৪৮,৭২০</div><div class="delta"><svg class="ico sm"><use href="#i-arrow-up"/></svg> গতকালের চেয়ে ১২%</div></div>
+      <div class="stat"><div class="label"><svg class="ico sm"><use href="#i-chart"/></svg>আজকের লাভ</div><div class="value num">৳ ৯,৪৩০</div><div class="delta">গড় লাভের হার ১৯%</div></div>
+      <div class="stat"><div class="label"><svg class="ico sm"><use href="#i-wallet"/></svg>মোট বাকি</div><div class="value num">৳ ৬২,১০০</div><div class="delta down">৭ জন গ্রাহক</div></div>
+      <div class="stat"><div class="label"><svg class="ico sm"><use href="#i-alert"/></svg>কম স্টক</div><div class="value num">৫</div><div class="delta down">অর্ডার দরকার</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="box">
+        <div class="box-title"><h2>সাত দিনের বিক্রি ও লাভ</h2><div class="chips"><button class="chip" aria-pressed="true">সপ্তাহ</button><button class="chip" aria-pressed="false">মাস</button></div></div>
+        <svg viewBox="0 0 640 220" width="100%" role="img" aria-label="সাত দিনের বিক্রি ও লাভের লাইন চার্ট">
+          <g stroke="#2E2E2E" stroke-width="1"><line x1="0" x2="640" y1="30" y2="30"/><line x1="0" x2="640" y1="95" y2="95"/><line x1="0" x2="640" y1="160" y2="160"/></g>
+          <polyline fill="none" stroke="#E8A317" stroke-width="3" points="20,150 110,120 200,132 290,80 380,96 470,50 560,70"/>
+          <polyline fill="none" stroke="#F2F1EC" stroke-width="2" stroke-dasharray="5 5" points="20,176 110,168 200,172 290,150 380,156 470,132 560,140"/>
+          <g fill="#9B9A94" font-size="13" font-family="Hind Siliguri"><text x="20" y="208">শনি</text><text x="110" y="208">রবি</text><text x="200" y="208">সোম</text><text x="290" y="208">মঙ্গল</text><text x="380" y="208">বুধ</text><text x="470" y="208">বৃহ</text><text x="560" y="208">শুক্র</text></g>
+        </svg>
+        <div class="btn-row muted" style="margin-top:8px;font-size:13px"><span>━ বিক্রি (অ্যাম্বার)</span><span>┅ লাভ (সাদা)</span></div>
+      </div>
+      <div class="box">
+        <div class="box-title"><h2>সতর্কতা</h2><span class="badge danger">৩টি</span></div>
+        <div class="stack" style="gap:12px">
+          <div class="btn-row" style="justify-content:space-between"><span>Honda CB Shine চেইন</span><span class="badge danger">স্টক ২</span></div>
+          <div class="btn-row" style="justify-content:space-between"><span>ইঞ্জিন অয়েল ১০W-৪০</span><span class="badge warn">মেয়াদ ২০ দিন</span></div>
+          <div class="btn-row" style="justify-content:space-between"><span>সাব্বির আহমেদ — বাকি</span><span class="badge danger">সীমা ছাড়িয়েছে</span></div>
+        </div>
+        <button class="btn ghost sm" style="margin-top:16px" data-toast="তালিকা খোলা হয়েছে (ডেমো)">সব সতর্কতা দেখুন</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- বিক্রি (POS) -->
+  <section class="screen" id="s-pos">
+    <div class="page-head">
+      <div><h1 class="display">বিক্রি</h1><p>বিল #১২০ · ক্যাশিয়ার রফিক</p></div>
+      <div class="btn-row"><span class="badge info">নতুন বিল</span></div>
+    </div>
+    <div class="pos">
+      <div class="stack">
+        <label class="search" style="width:100%"><svg class="ico sm"><use href="#i-barcode"/></svg><input placeholder="বারকোড স্ক্যান করুন বা নাম লিখুন" aria-label="পণ্য খুঁজুন"></label>
+        <div class="chips" id="catChips">
+          <button class="chip" aria-pressed="true" data-cat="all">সব</button>
+          <button class="chip" aria-pressed="false" data-cat="chain">চেইন ও স্প্রকেট</button>
+          <button class="chip" aria-pressed="false" data-cat="brake">ব্রেক</button>
+          <button class="chip" aria-pressed="false" data-cat="oil">তেল ও ফিল্টার</button>
+        </div>
+        <div class="tile-grid" id="tiles"></div>
+      </div>
+      <div class="box">
+        <div class="box-title"><h2>কার্ট</h2><span class="muted num" id="cartCount">০ আইটেম</span></div>
+        <div id="cart"></div>
+        <div style="margin-top:12px">
+          <div class="total-row"><span>সাবটোটাল</span><span class="num" id="sub">৳ ০</span></div>
+          <div class="total-row"><span>ছাড়</span><span class="num">− ৳ ৫০</span></div>
+          <div class="total-row grand"><span>মোট</span><span class="num" id="grand">৳ ০</span></div>
+        </div>
+        <div class="stack" style="margin-top:14px;gap:10px">
+          <button class="btn primary lg" data-toast="পেমেন্ট ডায়ালগ খোলা হয়েছে (ডেমো)">পেমেন্ট নিন</button>
+          <button class="btn ghost" style="width:100%" data-toast="বিল বাতিল হয়েছে (ডেমো)"><svg class="ico sm"><use href="#i-trash"/></svg>বিল বাতিল</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- পণ্য ও স্টক -->
+  <section class="screen" id="s-products">
+    <div class="page-head">
+      <div><h1 class="display">পণ্য ও স্টক</h1><p>১২৪টি পণ্য · ৫টির স্টক কম</p></div>
+      <div class="btn-row"><button class="btn ghost" data-toast="এক্সেল থেকে এক্সপোর্ট (ডেমো)">এক্সপোর্ট</button><button class="btn primary"><svg class="ico sm"><use href="#i-plus"/></svg>নতুন পণ্য</button></div>
+    </div>
+    <div class="box" style="margin-bottom:16px">
+      <div class="chips">
+        <button class="chip" aria-pressed="true">সব</button>
+        <button class="chip" aria-pressed="false">কম স্টক</button>
+        <button class="chip" aria-pressed="false">OEM</button>
+        <button class="chip" aria-pressed="false">ফিটিং</button>
+      </div>
+    </div>
+    <div class="box flat" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>পণ্য</th><th>বারকোড</th><th>প্রযোজ্য বাইক</th><th>ধরন</th><th class="r">স্টক</th><th class="r">ক্রয়</th><th class="r">বিক্রয়</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>চেইন ও স্প্রকেট সেট</td><td class="num">৮৯০১২০০১</td><td>Honda CB Shine</td><td><span class="badge neutral">OEM</span></td><td class="r"><span class="badge danger">২</span></td><td class="r num">১,৪৫০</td><td class="r num">১,৮০০</td><td class="r"><button class="iconbtn" style="width:34px;height:34px" aria-label="সম্পাদনা"><svg class="ico sm"><use href="#i-settings"/></svg></button></td></tr>
+            <tr><td>ব্রেক প্যাড সেট</td><td class="num">৮৯০১২০০২</td><td>Shine, Splendor</td><td><span class="badge neutral">ফিটিং</span></td><td class="r"><span class="badge danger">৩</span></td><td class="r num">২৫০</td><td class="r num">৪০০</td><td class="r"><button class="iconbtn" style="width:34px;height:34px" aria-label="সম্পাদনা"><svg class="ico sm"><use href="#i-settings"/></svg></button></td></tr>
+            <tr><td>এয়ার ফিল্টার</td><td class="num">৮৯০১২০০৩</td><td>FZ-S V3</td><td><span class="badge neutral">OEM</span></td><td class="r"><span class="badge ok">৯</span></td><td class="r num">৩২০</td><td class="r num">৪৫০</td><td class="r"><button class="iconbtn" style="width:34px;height:34px" aria-label="সম্পাদনা"><svg class="ico sm"><use href="#i-settings"/></svg></button></td></tr>
+            <tr><td>ইঞ্জিন অয়েল ১০W-৪০</td><td class="num">৮৯০১২০০৪</td><td>সব বাইক</td><td><span class="badge neutral">ফিটিং</span></td><td class="r"><span class="badge warn">৪</span></td><td class="r num">৪৩০</td><td class="r num">৫৫০</td><td class="r"><button class="iconbtn" style="width:34px;height:34px" aria-label="সম্পাদনা"><svg class="ico sm"><use href="#i-settings"/></svg></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ক্রয় -->
+  <section class="screen" id="s-purchase">
+    <div class="page-head"><div><h1 class="display">ক্রয়</h1><p>সরবরাহকারী থেকে পণ্য যোগ করলে স্টক ও দেনা নিজে থেকে হালনাগাদ হবে</p></div><button class="btn primary"><svg class="ico sm"><use href="#i-plus"/></svg>নতুন ক্রয়</button></div>
+    <div class="grid-2">
+      <div class="box">
+        <div class="box-title"><h2>নতুন ক্রয়</h2><span class="badge info">খসড়া</span></div>
+        <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label for="sup">সরবরাহকারী</label><select id="sup" class="select"><option>রহমান ট্রেডার্স</option><option>মেসার্স বাইক পার্টস</option></select></div>
+          <div class="field"><label for="inv">ইনভয়েস নম্বর</label><input id="inv" class="input" value="PO-0087"></div>
+        </div>
+        <div class="field"><label for="qtyIn">পণ্য ও পরিমাণ</label><input id="qtyIn" class="input" placeholder="বারকোড বা নাম"></div>
+        <div class="field"><label for="amt">মোট পরিশোধ (৳)</label><input id="amt" class="input money" value="৳ ১,২০০"></div>
+        <div class="field"><label for="bad">ভুল উদাহরণ</label><input id="bad" class="input error" value="−৫"><span class="hint">পরিমাণ ০-এর বেশি হতে হবে</span></div>
+        <div class="btn-row" style="justify-content:flex-end"><button class="btn ghost">বাতিল</button><button class="btn primary" data-toast="ক্রয় সংরক্ষিত, স্টক বাড়ানো হয়েছে">ক্রয় সংরক্ষণ করুন</button></div>
+      </div>
+      <div class="box">
+        <div class="box-title"><h2>সেটিংস ও পছন্দ</h2></div>
+        <div class="btn-row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span>ক্রয়ে ট্যাক্স যোগ করুন</span><button class="toggle" role="switch" aria-checked="false" aria-label="ট্যাক্স যোগ" data-toggle></button></div>
+        <div class="btn-row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)"><span>স্টক স্বয়ংক্রিয় বাড়ুক</span><button class="toggle" role="switch" aria-checked="true" aria-label="স্বয়ংক্রিয় স্টক" data-toggle></button></div>
+        <div class="btn-row" style="justify-content:space-between;padding:10px 0"><span>বাংলা অঙ্ক দেখান</span><button class="toggle" role="switch" aria-checked="true" aria-label="বাংলা অঙ্ক" data-toggle></button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- গ্রাহক -->
+  <section class="screen" id="s-customers">
+    <div class="page-head"><div><h1 class="display">গ্রাহক ও বাকি</h1><p>মোট বাকি ৳ ৬২,১০০</p></div><div class="btn-row"><button class="btn ghost">বাকি রিমাইন্ডার</button><button class="btn primary"><svg class="ico sm"><use href="#i-plus"/></svg>নতুন গ্রাহক</button></div></div>
+    <div class="box flat" style="padding:0">
+      <div class="table-wrap"><table>
+        <thead><tr><th>নাম</th><th>ফোন</th><th>ধরন</th><th class="r">মোট কেনা</th><th class="r">বাকি</th><th>পরিশোধের তারিখ</th></tr></thead>
+        <tbody>
+          <tr><td>আরিফ হোসেন</td><td class="num">০১৭১২-৩৪৫৬৭৮</td><td><span class="badge neutral">নিয়মিত</span></td><td class="r num">৳ ২৮,৫০০</td><td class="r num">৳ ১,৫০০</td><td><span class="badge warn">১৫ নভেম্বর</span></td></tr>
+          <tr><td>সাব্বির আহমেদ</td><td class="num">০১৮১৯-০০৭৭৮৮</td><td><span class="badge neutral">পাইকারি</span></td><td class="r num">৳ ৪১,০০০</td><td class="r num">৳ ১২,৫০০</td><td><span class="badge danger">সীমা ছাড়িয়েছে</span></td></tr>
+          <tr><td>নুসরাত জাহান</td><td class="num">০১৯১১-২২৩৩৪৪</td><td><span class="badge neutral">সাধারণ</span></td><td class="r num">৳ ৪,২০০</td><td class="r num">৳ ০</td><td><span class="badge ok">পরিশোধিত</span></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- সার্ভিস জব -->
+  <section class="screen" id="s-jobs">
+    <div class="page-head"><div><h1 class="display">সার্ভিস জব</h1><p>৬টি খোলা কাজ</p></div><button class="btn primary"><svg class="ico sm"><use href="#i-plus"/></svg>নতুন জব কার্ড</button></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="label">অপেক্ষমাণ</div><div class="value num">২</div></div>
+      <div class="stat"><div class="label">কাজ চলছে</div><div class="value num">৩</div></div>
+      <div class="stat"><div class="label">প্রস্তুত</div><div class="value num">১</div></div>
+      <div class="stat"><div class="label">দেরি হচ্ছে</div><div class="value num">১</div></div>
+    </div>
+    <div class="box"><div class="box-title"><h2>JC-0412 · আরিফ হোসেন</h2><span class="badge info">কাজ চলছে</span></div>
+      <p class="muted" style="margin:0 0 12px">Honda CB Shine · ঢাকা মেট্রো ল-১১-৪৫৬৭ · মিস্ত্রি রফিক</p>
+      <div class="btn-row"><button class="btn sm ghost">ছবি যোগ</button><button class="btn sm ghost">পার্ট যোগ</button><button class="btn sm primary">প্রস্তুত চিহ্নিত করুন</button></div>
+    </div>
+  </section>
+
+  <!-- ক্যাশবুক -->
+  <section class="screen" id="s-cash">
+    <div class="page-head"><div><h1 class="display">ক্যাশবুক</h1><p>আজকের নগদ প্রবাহ</p></div><div class="btn-row"><button class="btn ghost"><svg class="ico sm"><use href="#i-minus"/></svg>খরচ যোগ</button><button class="btn primary">ক্যাশ বন্ধ করুন</button></div></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="label">শুরুর ক্যাশ</div><div class="value num">৳ ৫,০০০</div></div>
+      <div class="stat"><div class="label">নগদ আয়</div><div class="value num" style="color:var(--ok)">৳ ৯,২০০</div></div>
+      <div class="stat"><div class="label">বিকাশ / নগদ</div><div class="value num">৳ ৬,৫০০</div></div>
+      <div class="stat"><div class="label">খরচ</div><div class="value num" style="color:var(--danger)">৳ ১,৮০০</div></div>
+    </div>
+  </section>
+
+  <!-- রিপোর্ট -->
+  <section class="screen" id="s-reports">
+    <div class="page-head"><div><h1 class="display">রিপোর্ট</h1><p>মাসিক হিসাব ও লাভ</p></div><button class="btn ghost" data-toast="এক্সেল ফাইল প্রস্তুত (ডেমো)">Excel ডাউনলোড</button></div>
+    <div class="box"><p class="muted" style="margin:0">এখানে মাসিক লাভ-ক্ষতি, পণ্যভিত্তিক বিক্রি ও বাকির রিপোর্ট দেখানো হবে।</p></div>
+  </section>
+
+  <!-- ডিজাইন সিস্টেম -->
+  <section class="screen" id="s-ui">
+    <div class="page-head"><div><h1 class="display">ডিজাইন সিস্টেম</h1><p>রং, ফন্ট, আইকন, বাটন ও বক্সের নিয়ম</p></div></div>
+
+    <div class="sheet-grid">
+      <div class="box">
+        <div class="box-title"><h2>রং</h2></div>
+        <div class="swatches">
+          <div class="swatch"><i style="background:#111111"></i><div>Base <span class="muted">#111111</span></div></div>
+          <div class="swatch"><i style="background:#1A1A1A"></i><div>Surface <span class="muted">#1A1A1A</span></div></div>
+          <div class="swatch"><i style="background:#E8A317"></i><div>Accent <span class="muted">#E8A317</span></div></div>
+          <div class="swatch"><i style="background:#F2F1EC"></i><div>Text <span class="muted">#F2F1EC</span></div></div>
+          <div class="swatch"><i style="background:#4FAE6E"></i><div>সফল <span class="muted">#4FAE6E</span></div></div>
+          <div class="swatch"><i style="background:#E8A317"></i><div>সতর্ক <span class="muted">#E8A317</span></div></div>
+          <div class="swatch"><i style="background:#E0583C"></i><div>বিপদ <span class="muted">#E0583C</span></div></div>
+          <div class="swatch"><i style="background:#5C8FBF"></i><div>তথ্য <span class="muted">#5C8FBF</span></div></div>
+        </div>
+        <p class="muted" style="font-size:13px;margin:12px 0 0">অ্যাকসেন্ট শুধু প্রধান বোতাম, সক্রিয় মেনু ও গুরুত্বপূর্ণ সংখ্যায়।</p>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><h2>টাইপোগ্রাফি</h2></div>
+        <div class="type-scale">
+          <div><span class="display" style="font-size:36px">আজকের সারাংশ</span><small>শিরোনাম 36</small></div>
+          <div><span style="font-size:20px;font-weight:600">বিক্রির তালিকা</span><small>কার্ড শিরোনাম 20</small></div>
+          <div><span>এই পণ্যের স্টক কম। অর্ডার দিন।</span><small>মূল লেখা 15</small></div>
+          <div><span class="muted" style="font-size:13px">সর্বশেষ আপডেট ১০ মিনিট আগে</span><small>সহায়ক 13</small></div>
+          <div><span class="num display" style="font-size:40px">৳ ৪৮,৭২০</span><small>সংখ্যা (ডানে সারিবদ্ধ)</small></div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><h2>বাটন</h2></div>
+        <div class="btn-row">
+          <button class="btn primary">প্রধান</button>
+          <button class="btn">দ্বিতীয়</button>
+          <button class="btn ghost">আউটলাইন</button>
+          <button class="btn danger">মুছুন</button>
+          <button class="btn primary" disabled>নিষ্ক্রিয়</button>
+        </div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn primary sm">ছোট</button>
+          <button class="btn ghost sm"><svg class="ico sm"><use href="#i-print"/></svg>প্রিন্ট</button>
+          <button class="iconbtn" aria-label="যোগ করুন"><svg class="ico"><use href="#i-plus"/></svg></button>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><h2>ফর্ম ও বাকি</h2></div>
+        <div class="field"><label for="demoName">গ্রাহকের নাম</label><input id="demoName" class="input" placeholder="নাম লিখুন"></div>
+        <div class="field"><label for="demoAmt">পরিশোধ (৳)</label><input id="demoAmt" class="input money" value="৳ ১,৫০০"></div>
+        <div class="btn-row"><span>বাকি মেনে নিন</span><button class="toggle" role="switch" aria-checked="true" aria-label="বাকি" data-toggle></button></div>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><h2>ব্যাজ ও অবস্থা</h2></div>
+        <div class="btn-row">
+          <span class="badge ok"><svg class="ico sm"><use href="#i-check"/></svg>পরিশোধিত</span>
+          <span class="badge warn"><svg class="ico sm"><use href="#i-alert"/></svg>কম স্টক</span>
+          <span class="badge danger">বাকি</span>
+          <span class="badge info">চলছে</span>
+          <span class="badge neutral">খসড়া</span>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><h2>বাটন টিপলে</h2></div>
+        <div class="btn-row"><button class="btn ghost" data-modal>মডাল খুলুন</button><button class="btn ghost" data-toast="সংরক্ষিত হয়েছে">টোস্ট দেখান</button></div>
+      </div>
+
+      <div class="box" style="grid-column:1/-1">
+        <div class="box-title"><h2>আইকন</h2><span class="muted" style="font-size:13px">লাইন স্টাইল, ১.৮ স্ট্রোক</span></div>
+        <div class="icon-row">
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-home"/></svg>ড্যাশবোর্ড</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-cart"/></svg>বিক্রি</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-box"/></svg>পণ্য</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-truck"/></svg>ক্রয়</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-users"/></svg>গ্রাহক</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-wrench"/></svg>সার্ভিস</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-wallet"/></svg>ক্যাশ</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-chart"/></svg>রিপোর্ট</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-receipt"/></svg>ক্যাশমেমো</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-barcode"/></svg>বারকোড</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-alert"/></svg>সতর্কতা</div>
+          <div class="icon-cell"><svg class="ico lg"><use href="#i-settings"/></svg>সেটিংস</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav" aria-label="দ্রুত মেনু">
+  <button data-go="dash"><svg class="ico"><use href="#i-home"/></svg>ড্যাশ</button>
+  <button data-go="pos"><svg class="ico"><use href="#i-cart"/></svg>বিক্রি</button>
+  <button data-go="products"><svg class="ico"><use href="#i-box"/></svg>পণ্য</button>
+  <button data-go="customers"><svg class="ico"><use href="#i-users"/></svg>গ্রাহক</button>
+  <button data-go="reports"><svg class="ico"><use href="#i-chart"/></svg>রিপোর্ট</button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><svg class="ico sm"><use href="#i-check"/></svg><span></span></div>
+
+<script>
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const bn = n => String(n).replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[d]);
+
+  const TILES = [
+    { n: "চেইন সেট CB Shine", p: 1800, c: "chain", t: "C" },
+    { n: "ব্রেক প্যাড সেট", p: 400, c: "brake", t: "B" },
+    { n: "এয়ার ফিল্টার", p: 450, c: "oil", t: "A" },
+    { n: "ইঞ্জিন অয়েল ১ লি.", p: 550, c: "oil", t: "O" },
+    { n: "ক্লাচ প্লেট", p: 1050, c: "chain", t: "K" },
+    { n: "ব্রেক লাইনার", p: 220, c: "brake", t: "L" }
+  ];
+  let cart = [{ n: "চেইন সেট CB Shine", p: 1800, q: 1 }, { n: "ইঞ্জিন অয়েল ১ লি.", p: 550, q: 2 }];
+
+  function renderTiles(cat = "all") {
+    $("#tiles").innerHTML = TILES.filter(t => cat === "all" || t.c === cat).map(t =>
+      `<button class="tile" data-add="${t.n}"><div class="thumb">${t.t}</div><div class="pn">${t.n}</div><div class="pp num">৳ ${bn(t.p)}</div></button>`).join("");
+  }
+  function renderCart() {
+    const box = $("#cart");
+    if (!cart.length) { box.innerHTML = `<div class="muted" style="padding:20px 0">কার্ট খালি। বাম দিক থেকে পণ্য যোগ করুন।</div>`; }
+    else box.innerHTML = cart.map((r, i) => `
+      <div class="cart-row">
+        <div>${r.n}<div class="muted num" style="font-size:13px">৳ ${bn(r.p)} × ${bn(r.q)}</div></div>
+        <div class="num" style="text-align:right">৳ ${bn(r.p * r.q)}</div>
+        <div class="qty"><button data-dec="${i}" aria-label="কমান">${"−"}</button><span>${bn(r.q)}</span><button data-inc="${i}" aria-label="বাড়ান">+</button></div>
+        <button class="iconbtn" style="width:32px;height:32px;justify-self:end" data-rm="${i}" aria-label="মুছুন"><svg class="ico sm"><use href="#i-x"/></svg></button>
+      </div>`).join("");
+    const sub = cart.reduce((s, r) => s + r.p * r.q, 0);
+    const grand = Math.max(0, sub - 50);
+    $("#sub").textContent = "৳ " + bn(sub.toLocaleString("en-US"));
+    $("#grand").textContent = "৳ " + bn(grand.toLocaleString("en-US"));
+    $("#cartCount").textContent = bn(cart.reduce((s, r) => s + r.q, 0)) + " আইটেম";
+  }
+  function toast(msg) {
+    const t = $("#toast"); t.querySelector("span").textContent = msg; t.classList.add("show");
+    clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+  function go(id) {
+    $$(".screen").forEach(s => s.classList.toggle("active", s.id === "s-" + id));
+    $$(".nav-item, .bottom-nav button").forEach(b => b.setAttribute("aria-current", b.dataset.go === id ? "page" : "false"));
+    closeDrawer(); window.scrollTo(0, 0);
+  }
+  function openDrawer() { $("#drawer").classList.add("open"); $("#backdrop").classList.remove("hidden"); $("#menuBtn").setAttribute("aria-expanded", "true"); }
+  function closeDrawer() { $("#drawer").classList.remove("open"); $("#backdrop").classList.add("hidden"); $("#menuBtn").setAttribute("aria-expanded", "false"); }
+
+  document.addEventListener("click", e => {
+    const t = e.target;
+    if (t.closest("#menuBtn")) return openDrawer();
+    if (t.closest("#backdrop")) return closeDrawer();
+    const g = t.closest("[data-go]"); if (g) return go(g.dataset.go);
+    const tg = t.closest("[data-toggle]"); if (tg) { tg.setAttribute("aria-checked", tg.getAttribute("aria-checked") !== "true"); return; }
+    const tt = t.closest("[data-toast]"); if (tt) return toast(tt.dataset.toast);
+    const add = t.closest("[data-add]");
+    if (add) {
+      const item = TILES.find(x => x.n === add.dataset.add);
+      const ex = cart.find(r => r.n === item.n);
+      ex ? ex.q++ : cart.push({ n: item.n, p: item.p, q: 1 });
+      renderCart(); return;
+    }
+    const inc = t.closest("[data-inc]"); if (inc) { cart[+inc.dataset.inc].q++; return renderCart(); }
+    const dec = t.closest("[data-dec]"); if (dec) { const r = cart[+dec.dataset.dec]; r.q > 1 ? r.q-- : cart.splice(+dec.dataset.dec, 1); return renderCart(); }
+    const rm = t.closest("[data-rm]"); if (rm) { cart.splice(+rm.dataset.rm, 1); return renderCart(); }
+    const cat = t.closest("#catChips [data-cat]");
+    if (cat) { $$("#catChips .chip").forEach(c => c.setAttribute("aria-pressed", c === cat)); renderTiles(cat.dataset.cat); return; }
+    const chip = t.closest(".chips .chip:not([data-cat])");
+    if (chip) { $$(".chips .chip", chip.parentElement).forEach(c => c.setAttribute("aria-pressed", c === chip)); }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
+  renderTiles(); renderCart();
+</script>
+</body>
+</html>
