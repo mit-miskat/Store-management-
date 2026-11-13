@@ -13,6 +13,17 @@ export function toBengaliDigits(input: number | string | null | undefined): stri
 }
 
 /**
+ * Converts Bengali digits (০-৯) back to ASCII digits (0-9) for search/parsing
+ */
+export function toEnglishDigits(input: string | null | undefined): string {
+  if (!input) return '';
+  return String(input).replace(/[০-৯]/g, (digit) => {
+    const idx = BENGALI_DIGITS.indexOf(digit);
+    return idx >= 0 ? String(idx) : digit;
+  });
+}
+
+/**
  * Formats a monetary amount to 2 decimal places with comma separation
  * e.g., 1450.5 -> "৳ ১,৪৫০.৫০"
  */

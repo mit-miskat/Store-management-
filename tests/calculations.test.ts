@@ -16,10 +16,13 @@ import {
 import {
   formatMoney,
   toBengaliDigits,
+  toEnglishDigits,
   calculateLineTotal,
   calculateBillTotal,
   amountInWordsBengali,
 } from '../src/lib/money.ts';
+import { filterProducts } from '../src/lib/products.ts';
+import type { Product } from '../src/types/index.ts';
 
 console.log('--- শুরু হচ্ছে AJ MOTORS হিসাব ও স্টক লজিক টেস্ট ---');
 
@@ -160,6 +163,78 @@ console.log('--- শুরু হচ্ছে AJ MOTORS হিসাব ও স�
   assert.equal(isLowStock(5, 5), true);
   assert.equal(isLowStock(6, 5), false);
   console.log('✓ কম স্টক সতর্কতা টেস্ট সফল');
+}
+
+// ৯. পণ্যের নাম ও কোড (SKU / বারকোড) দিয়ে অনুসন্ধান টেস্ট
+{
+  console.log('টেস্ট ৯: পণ্যের নাম ও কোড দিয়ে ফিল্টার টেস্ট');
+  assert.equal(toEnglishDigits('৮৯০১২০০১'), '89012001');
+
+  const sampleProducts: Product[] = [
+    {
+      id: 'p-1',
+      name: 'হোন্ডা চেইন সেট (১৬০ সিসি)',
+      sku: 'CHN-HND-01',
+      barcode: '89012001',
+      category: 'chain',
+      partType: 'OEM',
+      applicableBike: 'Honda CB Trigger',
+      unit: 'সেট',
+      costPrice: 1450,
+      sellPrice: 1800,
+      stockQty: 2,
+      minStock: 5,
+      taxRate: 0,
+      active: true,
+    },
+    {
+      id: 'p-2',
+      name: 'ব্রেক প্যাড ফ্রন্ট (অরিজিনাল)',
+      sku: 'BRK-YAM-02',
+      barcode: '89012002',
+      category: 'brake',
+      partType: 'ফিটিং',
+      applicableBike: 'Yamaha FZS',
+      unit: 'জোড়া',
+      costPrice: 320,
+      sellPrice: 480,
+      stockQty: 14,
+      minStock: 4,
+      taxRate: 0,
+      active: true,
+    },
+  ];
+
+  // বাংলা নামে খোঁজা
+  const byName = filterProducts(sampleProducts, { searchQuery: 'চেইন' });
+  assert.equal(byName.length, 1);
+  assert.equal(byName[0].id, 'p-1');
+
+  // SKU কোড দিয়ে খোঁজা (case-insensitive)
+  const bySku = filterProducts(sampleProducts, { searchQuery: 'brk-yam-02' });
+  assert.equal(bySku.length, 1);
+  assert.equal(bySku[0].id, 'p-2');
+
+  // ইংরেজি বারকোড দিয়ে খোঁজা
+  const byEnBarcode = filterProducts(sampleProducts, { searchQuery: '89012002' });
+  assert.equal(byEnBarcode.length, 1);
+  assert.equal(byEnBarcode[0].id, 'p-2');
+
+  // বাংলা অঙ্কের বারকোড দিয়ে খোঁজা
+  const byBnBarcode = filterProducts(sampleProducts, { searchQuery: '৮৯০১২০০১' });
+  assert.equal(byBnBarcode.length, 1);
+  assert.equal(byBnBarcode[0].id, 'p-1');
+
+  // ফিল্টার চিপ + ক্যাটাগরি সহ খোঁজা
+  const byChip = filterProducts(sampleProducts, {
+    searchQuery: '৮৯০১২০০',
+    chip: 'low_stock',
+    category: 'chain',
+  });
+  assert.equal(byChip.length, 1);
+  assert.equal(byChip[0].id, 'p-1');
+
+  console.log('✓ পণ্যের নাম ও কোড দিয়ে অনুসন্ধান টেস্ট সফল');
 }
 
 console.log('--- সবকটি হিসাব ও স্টক লজিক টেস্ট সফলভাবে সম্পন্ন হয়েছে! ---');

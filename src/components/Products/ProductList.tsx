@@ -9,12 +9,13 @@ import {
   Search,
   Truck,
   AlertTriangle,
-  Package,
+  X,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext.tsx';
 import { Product } from '../../types/index.ts';
-import { formatMoney, toBengaliDigits } from '../../lib/money.ts';
+import { formatMoney, toBengaliDigits, toEnglishDigits } from '../../lib/money.ts';
 import { getStockStatus } from '../../lib/stock.ts';
+import { filterProducts } from '../../lib/products.ts';
 import { QuickPurchaseModal } from './QuickPurchaseModal.tsx';
 
 export const ProductList: React.FC = () => {
@@ -35,36 +36,39 @@ export const ProductList: React.FC = () => {
 
   const lowStockCount = products.filter((p) => p.stockQty <= p.minStock).length;
 
-  // Filter products based on search and chips
-  const filteredProducts = products.filter((p) => {
-    // Search query check
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const match =
-        p.name.toLowerCase().includes(q) ||
-        p.barcode.toLowerCase().includes(q) ||
-        p.applicableBike.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q);
-      if (!match) return false;
-    }
-
-    // Chip filter check
-    if (filterChip === 'low_stock' && p.stockQty > p.minStock) return false;
-    if (filterChip === 'OEM' && p.partType !== 'OEM') return false;
-    if (filterChip === 'ফিটিং' && p.partType !== 'ফিটিং') return false;
-
-    // Category filter check
-    if (categoryFilter !== 'all' && p.category !== categoryFilter) return false;
-
-    return true;
+  // Filter products by name, SKU/barcode code (English or Bengali digits), bike model, chip, and category
+  const filteredProducts = filterProducts(products, {
+    searchQuery,
+    chip: filterChip,
+    category: categoryFilter,
   });
 
+  // Also filter stock movement history if search query is active
+  const normalizedQuery = toEnglishDigits(searchQuery.trim().toLowerCase());
+  const rawQuery = searchQuery.trim().toLowerCase();
+  const filteredMovements = stockMovements.filter((m) => {
+    if (!rawQuery) return true;
+    return (
+      m.productName.toLowerCase().includes(rawQuery) ||
+      (m.refId && (m.refId.toLowerCase().includes(rawQuery) || m.refId.toLowerCase().includes(normalizedQuery))) ||
+      (m.reason && m.reason.toLowerCase().includes(rawQuery))
+    );
+  });
+
+  const hasActiveFilter = Boolean(searchQuery.trim()) || filterChip !== 'all' || categoryFilter !== 'all';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterChip('all');
+    setCategoryFilter('all');
+  };
+
   const handleExportCSV = () => {
-    const headers = 'ID,Name,Barcode,Bike,Type,Unit,Stock,CostPrice,SellPrice\n';
-    const rows = products
+    const headers = 'ID,Name,SKU,Barcode,Bike,Type,Unit,Stock,CostPrice,SellPrice\n';
+    const rows = filteredProducts
       .map(
         (p) =>
-          `"${p.id}","${p.name}","${p.barcode}","${p.applicableBike}","${p.partType}","${p.unit}",${p.stockQty},${p.costPrice},${p.sellPrice}`
+          `"${p.id}","${p.name}","${p.sku}","${p.barcode}","${p.applicableBike}","${p.partType}","${p.unit}",${p.stockQty},${p.costPrice},${p.sellPrice}`
       )
       .join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -114,8 +118,8 @@ export const ProductList: React.FC = () => {
         </div>
       </div>
 
-      {/* View Switcher Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2E2E2E] pb-2">
+      {/* View Switcher Tabs & Product Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2E2E2E] pb-3">
         <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab('products')}
@@ -126,7 +130,7 @@ export const ProductList: React.FC = () => {
             }`}
           >
             <Layers className="w-4 h-4" />
-            পণ্য তালিকা
+            পণ্য তালিকা ({toBengaliDigits(filteredProducts.length)})
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -137,20 +141,36 @@ export const ProductList: React.FC = () => {
             }`}
           >
             <History className="w-4 h-4" />
-            স্টক ইতিহাস ({toBengaliDigits(stockMovements.length)})
+            স্টক ইতিহাস ({toBengaliDigits(filteredMovements.length)})
           </button>
         </div>
 
-        {/* Local Search input */}
+        {/* Search Bar to filter products by name or code (SKU / Barcode) */}
         <div className="relative w-full sm:max-w-xs md:max-w-sm">
           <Search className="w-4 h-4 text-[#9B9A94] absolute left-3 top-3 pointer-events-none" />
           <input
-            type="text"
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="পণ্য বা বারকোড খুঁজুন..."
-            className="w-full h-10 pl-9 pr-3 bg-[#1A1A1A] border border-[#2E2E2E] rounded-lg text-xs sm:text-sm text-[#F2F1EC] placeholder-[#9B9A94] focus:border-[#E8A317] outline-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' && searchQuery) {
+                setSearchQuery('');
+              }
+            }}
+            aria-label="পণ্যের নাম বা কোড দিয়ে খুঁজুন"
+            placeholder="পণ্যের নাম, SKU বা বারকোড খুঁজুন..."
+            className="w-full h-10 pl-9 pr-9 bg-[#1A1A1A] border border-[#2E2E2E] rounded-lg text-xs sm:text-sm text-[#F2F1EC] placeholder-[#9B9A94] focus:border-[#E8A317] outline-none transition"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="খোঁজা মুছুন"
+              className="absolute right-2.5 top-2.5 w-5 h-5 rounded grid place-items-center text-[#9B9A94] hover:text-[#F2F1EC] hover:bg-[#232323] transition cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -244,8 +264,20 @@ export const ProductList: React.FC = () => {
                 <tbody className="divide-y divide-[#2E2E2E]">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-12 text-center text-[#9B9A94]">
-                        কোনো পণ্য খুঁজে পাওয়া যায়নি। নতুন পণ্য যোগ করুন বা ফিল্টার পরিবর্তন করুন।
+                      <td colSpan={8} className="py-12 px-4 text-center text-[#9B9A94]">
+                        <p className="mb-3">
+                          কোনো পণ্য খুঁজে পাওয়া যায়নি। নতুন পণ্য যোগ করুন বা ফিল্টার পরিবর্তন করুন।
+                        </p>
+                        {hasActiveFilter && (
+                          <button
+                            type="button"
+                            onClick={resetFilters}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#2E2E2E] text-xs font-medium text-[#E8A317] hover:bg-[#232323] transition cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            ফিল্টার ও খোঁজা রিসেট করুন
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -367,50 +399,58 @@ export const ProductList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2E2E2E]">
-                {stockMovements.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#232323] transition">
-                    <td className="py-3 px-4 text-xs text-[#9B9A94]">{m.createdAt}</td>
-                    <td className="py-3 px-3 font-semibold text-[#F2F1EC]">{m.productName}</td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${
-                          m.type === 'purchase'
-                            ? 'text-[#4FAE6E] border-[#4FAE6E]/40 bg-[#4FAE6E]/10'
+                {filteredMovements.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 px-4 text-center text-[#9B9A94]">
+                      কোনো স্টক লেনদেন খুঁজে পাওয়া যায়নি।
+                    </td>
+                  </tr>
+                ) : (
+                  filteredMovements.map((m) => (
+                    <tr key={m.id} className="hover:bg-[#232323] transition">
+                      <td className="py-3 px-4 text-xs text-[#9B9A94]">{m.createdAt}</td>
+                      <td className="py-3 px-3 font-semibold text-[#F2F1EC]">{m.productName}</td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                            m.type === 'purchase'
+                              ? 'text-[#4FAE6E] border-[#4FAE6E]/40 bg-[#4FAE6E]/10'
+                              : m.type === 'sale'
+                              ? 'text-[#E8A317] border-[#E8A317]/40 bg-[#E8A317]/10'
+                              : m.type === 'adjust'
+                              ? 'text-[#5C8FBF] border-[#5C8FBF]/40 bg-[#5C8FBF]/10'
+                              : 'text-[#E0583C] border-[#E0583C]/40 bg-[#E0583C]/10'
+                          }`}
+                        >
+                          {m.type === 'purchase'
+                            ? 'ক্রয় (+)'
                             : m.type === 'sale'
-                            ? 'text-[#E8A317] border-[#E8A317]/40 bg-[#E8A317]/10'
+                            ? 'বিক্রি (−)'
                             : m.type === 'adjust'
-                            ? 'text-[#5C8FBF] border-[#5C8FBF]/40 bg-[#5C8FBF]/10'
-                            : 'text-[#E0583C] border-[#E0583C]/40 bg-[#E0583C]/10'
+                            ? 'সমন্বয়'
+                            : 'নষ্ট/ড্যামেজ'}
+                        </span>
+                      </td>
+                      <td
+                        className={`py-3 px-3 text-right font-display font-bold text-base num ${
+                          m.qtyChange > 0 ? 'text-[#4FAE6E]' : 'text-[#E0583C]'
                         }`}
                       >
-                        {m.type === 'purchase'
-                          ? 'ক্রয় (+)'
-                          : m.type === 'sale'
-                          ? 'বিক্রি (−)'
-                          : m.type === 'adjust'
-                          ? 'সমন্বয়'
-                          : 'নষ্ট/ড্যামেজ'}
-                      </span>
-                    </td>
-                    <td
-                      className={`py-3 px-3 text-right font-display font-bold text-base num ${
-                        m.qtyChange > 0 ? 'text-[#4FAE6E]' : 'text-[#E0583C]'
-                      }`}
-                    >
-                      {m.qtyChange > 0
-                        ? `+${toBengaliDigits(m.qtyChange)}`
-                        : toBengaliDigits(m.qtyChange)}
-                    </td>
-                    <td className="py-3 px-3 text-right font-display font-medium text-sm text-[#F2F1EC] num">
-                      {toBengaliDigits(m.stockAfter)}
-                    </td>
-                    <td className="py-3 px-3 text-xs text-[#9B9A94]">
-                      {m.refId && <span className="font-mono text-[#F2F1EC] mr-1.5">{m.refId}</span>}
-                      {m.reason || '—'}
-                    </td>
-                    <td className="py-3 px-4 text-xs text-[#9B9A94]">{m.createdBy}</td>
-                  </tr>
-                ))}
+                        {m.qtyChange > 0
+                          ? `+${toBengaliDigits(m.qtyChange)}`
+                          : toBengaliDigits(m.qtyChange)}
+                      </td>
+                      <td className="py-3 px-3 text-right font-display font-medium text-sm text-[#F2F1EC] num">
+                        {toBengaliDigits(m.stockAfter)}
+                      </td>
+                      <td className="py-3 px-3 text-xs text-[#9B9A94]">
+                        {m.refId && <span className="font-mono text-[#F2F1EC] mr-1.5">{m.refId}</span>}
+                        {m.reason || '—'}
+                      </td>
+                      <td className="py-3 px-4 text-xs text-[#9B9A94]">{m.createdBy}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
